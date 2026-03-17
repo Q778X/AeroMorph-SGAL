@@ -1,0 +1,52 @@
+mode: "train"
+
+data:
+  root_dir: "./data/point_clouds"
+  csv_path: "./data/aero_metadata.csv"
+  batch_size: 8
+  num_workers: 12
+  prefetch_factor: 2
+  pin_memory: true
+  num_points: 4096
+  split_mode: "fixed"
+
+model:
+  point_transformer:
+    embed_dim: 256
+    depth: [2, 4, 8, 4]
+    num_heads: [4, 8, 16, 32]
+
+  implicit_sdf:
+    control_points: 128
+    hidden_dim: 256
+    num_layers: 8                   
+
+  fusion:
+    hidden_dim: 512
+    dropout: 0.3
+
+train:
+  epochs: 200
+  lr: 0.0002
+  weight_decay: 0.001
+  precision: "bf16-mixed"
+  accumulate_grad_batches: 4
+  log_every_n_steps: 10
+  use_aero_loss: true
+  aero_loss:
+    velocity_dir: [1.0, 0.0, 0.0]
+    front_axis: 0
+    front_threshold: 0.25
+    grad_weight: 0.1
+    smooth_weight: 0.01
+
+  accelerator: "gpu"
+  devices: 1
+  strategy: "auto"
+  num_sanity_val_steps: 2
+  deterministic: false
+  benchmark: true
+
+inference:
+  model_path: "outputs/checkpoints/last.ckpt"
+  output_vis: true
